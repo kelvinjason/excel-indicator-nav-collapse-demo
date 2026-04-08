@@ -6,6 +6,7 @@ from statistics import mean
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 OUTPUT = Path("indicator_navigation_demo.xlsx")
@@ -184,6 +185,21 @@ BOLD = Font(bold=True)
 CENTER = Alignment(horizontal="center", vertical="center")
 LEFT = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
+DETAIL_HEADERS = [
+    "Category",
+    "Indicator ID",
+    "Indicator Name",
+    "Definition",
+    "Unit",
+    "Current",
+    "Target",
+    "Status",
+    "Trend",
+    "Update Date",
+    "Owner",
+    "Notes",
+]
+
 
 def compute_status(item: dict) -> str:
     current = item["current"]
@@ -296,12 +312,39 @@ ws_detail["A1"].fill = TITLE_FILL
 ws_detail["A1"].alignment = LEFT
 ws_detail.merge_cells("A1:M1")
 ws_detail["A2"] = (
-    "Each category is collapsed by default. Use Excel's native outline +/- controls on the left to expand/collapse a category block."
+    "Each category is collapsed by default. Use Excel's native outline +/- controls on the left to expand/collapse a category block. "
+    "For no-macro single-category view, change selector C3."
 )
 ws_detail.merge_cells("A2:M2")
 ws_detail["A2"].alignment = LEFT
 ws_detail.sheet_properties.outlinePr.summaryBelow = False
 ws_detail.sheet_view.showOutlineSymbols = True
+
+ws_detail["A3"] = "No-Macro Selector"
+ws_detail["A3"].font = BOLD
+ws_detail["A3"].fill = HEADER_FILL
+ws_detail["A3"].border = BORDER
+ws_detail["A3"].alignment = CENTER
+
+ws_detail["B3"] = "Category"
+ws_detail["B3"].font = BOLD
+ws_detail["B3"].fill = HEADER_FILL
+ws_detail["B3"].border = BORDER
+ws_detail["B3"].alignment = CENTER
+
+ws_detail["C3"] = "All"
+ws_detail["C3"].border = BORDER
+ws_detail["C3"].alignment = CENTER
+
+cat_options = ",".join(category["category"] for category in CATEGORIES)
+dv_category = DataValidation(type="list", formula1=f'"All,{cat_options}"', allow_blank=False)
+ws_detail.add_data_validation(dv_category)
+dv_category.add(ws_detail["C3"])
+
+ws_detail["D3"] = "(No VBA) Change C3 to view a single category in the table below."
+ws_detail.merge_cells("D3:M3")
+ws_detail["D3"].alignment = LEFT
+ws_detail["D3"].border = BORDER
 
 current_row = 4
 for idx, category in enumerate(CATEGORIES, start=1):
@@ -329,21 +372,7 @@ for idx, category in enumerate(CATEGORIES, start=1):
     current_row += 1
 
     table_header_row = current_row
-    detail_headers = [
-        "Toggle",
-        "Category",
-        "Indicator ID",
-        "Indicator Name",
-        "Definition",
-        "Unit",
-        "Current",
-        "Target",
-        "Status",
-        "Trend",
-        "Update Date",
-        "Owner",
-        "Notes",
-    ]
+    detail_headers = ["Toggle", *DETAIL_HEADERS]
     for col, header in enumerate(detail_headers, start=1):
         cell = ws_detail.cell(table_header_row, col, header)
         cell.font = BOLD
@@ -463,6 +492,63 @@ summary_table.tableStyleInfo = TableStyleInfo(
 )
 ws_summary.add_table(summary_table)
 
+# --- No-macro focused table (dynamic filter view) ---
+helper_start_col = 17  # Q
+helper_header_row = 4
+helper_data_start = helper_header_row + 1
+
+for idx, header in enumerate(DETAIL_HEADERS):
+    cell = ws_detail.cell(helper_header_row, helper_start_col + idx, header)
+    cell.font = BOLD
+    cell.fill = HEADER_FILL
+    cell.border = BORDER
+    cell.alignment = CENTER
+
+for row_idx, item in enumerate(all_items, start=helper_data_start):
+    values = [
+        item["category"],
+        item["id"],
+        item["name"],
+        item["definition"],
+        item["unit"],
+        item["current"],
+        item["target"],
+        item["status"],
+        item["trend"],
+        item["updated_at"],
+        item["owner"],
+        item["notes"],
+    ]
+    for col_offset, value in enumerate(values):
+        cell = ws_detail.cell(row_idx, helper_start_col + col_offset, value)
+        cell.border = BORDER
+        cell.alignment = LEFT if col_offset not in {5, 6} else CENTER
+
+focus_title_row = 29
+focus_header_row = 30
+focus_data_row = 31
+
+ws_detail.cell(focus_title_row, 1, "No-Macro Focus View (single category)")
+ws_detail.merge_cells(f"A{focus_title_row}:L{focus_title_row}")
+ws_detail.cell(focus_title_row, 1).font = BOLD
+ws_detail.cell(focus_title_row, 1).fill = SECTION_FILL
+ws_detail.cell(focus_title_row, 1).border = BORDER
+ws_detail.cell(focus_title_row, 1).alignment = LEFT
+
+for col, header in enumerate(DETAIL_HEADERS, start=1):
+    cell = ws_detail.cell(focus_header_row, col, header)
+    cell.font = BOLD
+    cell.fill = HEADER_FILL
+    cell.border = BORDER
+    cell.alignment = CENTER
+
+helper_data_end = helper_data_start + len(all_items) - 1
+ws_detail.cell(
+    focus_data_row,
+    1,
+    f'=IFERROR(FILTER($Q${helper_data_start}:$AB${helper_data_end},($Q${helper_data_start}:$Q${helper_data_end}=$C$3)+($C$3="All")),"No matching indicators")',
+)
+
 for sheet in (ws_summary, ws_detail):
     sheet.freeze_panes = "A4"
 
@@ -499,9 +585,11 @@ for col, width in summary_widths.items():
 for col, width in detail_widths.items():
     ws_detail.column_dimensions[col].width = width
 
-# helper columns for VBA row-group control
+# helper columns for row-group control and no-macro data source
 ws_detail.column_dimensions['N'].hidden = True
 ws_detail.column_dimensions['O'].hidden = True
+for col in ("Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "AA", "AB"):
+    ws_detail.column_dimensions[col].hidden = True
 
 wb.save(OUTPUT)
 print(f"Created {OUTPUT.resolve()}")

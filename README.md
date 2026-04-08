@@ -5,7 +5,8 @@ This repo contains a sample Excel workbook built with simulated indicator data.
 ## Included files
 
 - `indicator_navigation_demo.xlsx` (native version, no VBA)
-- `indicator_navigation_demo_macro.xlsm` (macro version, supports single-open toggle)
+- `indicator_navigation_demo_nomacro.xlsx` (native no-VBA, with selector-based single-category focus view)
+- `indicator_navigation_demo_macro.xlsm` (macro version, supports click `+/-` single-open toggle)
 
 ## What it does
 
@@ -19,6 +20,7 @@ This repo contains a sample Excel workbook built with simulated indicator data.
 - Each category block is **collapsed by default**.
 - Users can expand/collapse each category with Excel's native outline **+ / -** controls on the left side.
 - A `Toggle` column is included as a visual cue for the grouped blocks.
+- No-macro mode: set `C3` selector (`All/Traffic/Conversion/Revenue/Retention`), and the **No-Macro Focus View** table below will auto-show only that category.
 
 ### Macro behavior (`.xlsm`)
 - In `indicator_navigation_demo_macro.xlsm`, click the `+ / -` cell in column A on a category row.
@@ -28,7 +30,8 @@ This repo contains a sample Excel workbook built with simulated indicator data.
 ## Notes
 
 - `.xlsx` is macro-free and supports manual group expand/collapse.
-- `.xlsm` includes VBA for auto-collapse of non-selected categories.
+- `indicator_navigation_demo_nomacro.xlsx` adds a selector-driven single-category view without VBA.
+- `.xlsm` includes VBA for click-based auto-collapse of non-selected categories.
 - If Excel opens with Protected View, enable editing and macros to use the toggle automation.
 
 ## How it was generated
