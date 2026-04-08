@@ -1,0 +1,15 @@
+Option Explicit
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    On Error GoTo SafeExit
+
+    If Target.CountLarge > 1 Then Exit Sub
+    If Target.Column <> 1 Then Exit Sub
+    If Left$(CStr(Me.Cells(Target.Row, "C").Value), 4) <> "CAT-" Then Exit Sub
+
+    Application.EnableEvents = False
+    IndicatorToggle.ToggleCategory Target.Row
+
+SafeExit:
+    Application.EnableEvents = True
+End Sub

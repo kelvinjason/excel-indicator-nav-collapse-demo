@@ -2,9 +2,10 @@
 
 This repo contains a sample Excel workbook built with simulated indicator data.
 
-## Included file
+## Included files
 
-- `indicator_navigation_demo.xlsx`
+- `indicator_navigation_demo.xlsx` (native version, no VBA)
+- `indicator_navigation_demo_macro.xlsm` (macro version, supports single-open toggle)
 
 ## What it does
 
@@ -19,11 +20,16 @@ This repo contains a sample Excel workbook built with simulated indicator data.
 - Users can expand/collapse each category with Excel's native outline **+ / -** controls on the left side.
 - A `Toggle` column is included as a visual cue for the grouped blocks.
 
+### Macro behavior (`.xlsm`)
+- In `indicator_navigation_demo_macro.xlsm`, click the `+ / -` cell in column A on a category row.
+- It will **expand that one category and auto-collapse all other categories**.
+- This implements the requested single-open accordion behavior.
+
 ## Notes
 
-- This version is a native `.xlsx` file with no VBA/macros.
-- Because of that, the workbook supports default collapsed groups and manual expand/collapse, but **does not auto-close other sections when one section is expanded**.
-- If needed, this can be extended into a macro-enabled `.xlsm` version later.
+- `.xlsx` is macro-free and supports manual group expand/collapse.
+- `.xlsm` includes VBA for auto-collapse of non-selected categories.
+- If Excel opens with Protected View, enable editing and macros to use the toggle automation.
 
 ## How it was generated
 

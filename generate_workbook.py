@@ -406,6 +406,8 @@ for idx, category in enumerate(CATEGORIES, start=1):
 
     ws_detail.row_dimensions.group(table_header_row, table_end_row, hidden=True, outline_level=1)
     ws_detail.row_dimensions[category_row].outlineLevel = 0
+    ws_detail.cell(category_row, 14, table_header_row)
+    ws_detail.cell(category_row, 15, table_end_row)
     current_row += 1
 
 summary_row = summary_start + 1
@@ -489,11 +491,17 @@ detail_widths = {
     "K": 14,
     "L": 18,
     "M": 42,
+    "N": 12,
+    "O": 12,
 }
 for col, width in summary_widths.items():
     ws_summary.column_dimensions[col].width = width
 for col, width in detail_widths.items():
     ws_detail.column_dimensions[col].width = width
+
+# helper columns for VBA row-group control
+ws_detail.column_dimensions['N'].hidden = True
+ws_detail.column_dimensions['O'].hidden = True
 
 wb.save(OUTPUT)
 print(f"Created {OUTPUT.resolve()}")
